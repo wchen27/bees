@@ -2,8 +2,10 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from subprocess import Popen
 import serial.tools.list_ports
-from audiorec import AudioRecorder
+from flysong import FlySongApp
 import os
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
 
 class App:
     def __init__(self, root):
@@ -45,7 +47,7 @@ class App:
         self.save_location_label = ttk.Label(root, text="Save Location:")
         self.save_location_label.grid(row=4, column=0, padx=10, pady=10)
         self.save_location_entry = ttk.Entry(root)
-        self.save_location_entry.grid(row=4, column=1, padx=10, pady=10 )
+        self.save_location_entry.grid(row=4, column=1, padx=10, pady=10)
         self.save_location_entry.insert(0, current_dir)
         self.browse_button = ttk.Button(root, text="Browse", command=self.browse_directory)
         self.browse_button.grid(row=4, column=2, padx=10, pady=10)
@@ -68,7 +70,12 @@ class App:
         self.progress_tb = tk.Text(root, height=10, width=50)
         self.progress_tb.grid(row=8, column=0, columnspan=2, padx=10, pady=10)
 
-        self.audio_recorder = AudioRecorder(self.progress_tb)
+        # Matplotlib Figure for real-time plotting
+        self.fig_canvas = FigureCanvasTkAgg(plt.figure(), master=root)
+        self.fig_canvas.get_tk_widget().grid(row=9, column=0, columnspan=3, padx=10, pady=10)
+
+        self.flysong_app = FlySongApp(self.progress_tb, self.fig_canvas)
+        self.flysong_app.initialize_plot()
 
     def get_com_ports(self):
         ports = serial.tools.list_ports.comports()
@@ -115,12 +122,12 @@ class App:
             return
 
         baud_rate = int(baud_rate)
-        self.audio_recorder.start_recording(com_port, baud_rate, save_location)
+        self.flysong_app.start_recording(com_port, baud_rate, save_location)
         self.start_recorder_button.config(state=tk.DISABLED)
         self.stop_recorder_button.config(state=tk.NORMAL)
 
     def stop_recording(self):
-        self.audio_recorder.stop_recording()
+        self.flysong_app.stop_recording()
         self.start_recorder_button.config(state=tk.NORMAL)
         self.stop_recorder_button.config(state=tk.DISABLED)
 
